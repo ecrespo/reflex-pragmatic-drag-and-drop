@@ -2,12 +2,12 @@
 
 ## Metadata
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Autor** | Ernesto (ecrespo) |
-| **Estado** | `IN_PROGRESS` |
-| **Versión** | 1.0 |
-| **Fecha** | 2026-06-14 |
+| **Author** | Ernesto (ecrespo) |
+| **Status** | `IN_PROGRESS` |
+| **Version** | 1.0 |
+| **Date** | 2026-06-14 |
 | **PRD** | ../prd/reflex-pragmatic-dnd.md |
 | **Tech Design** | ../technical/architecture.md |
 | **Data Model** | ../data-model/event-payloads.md |
@@ -15,107 +15,115 @@
 
 ---
 
-## 1. Resumen de Implementación
+## 1. Implementation Summary
 
-Construcción incremental en 5 fases, de la base del proyecto al empaquetado para
-PyPI. El núcleo (Fases 1-3) ya está implementado en este repositorio; las Fases 4-5
-quedan como trabajo planificado. Enfoque: envolver primero el core, validar con un
-ejemplo real (Kanban), luego añadir hitbox/auto-scroll y, por último, pulido y
-publicación.
+Incremental build in 5 phases, from the project foundation to packaging for
+PyPI. The core (Phases 1-3) is already implemented in this repository; Phases 4-5
+remain as planned work. Approach: wrap the core first, validate with a real
+example (Kanban), then add hitbox/auto-scroll and, finally, polish and
+publish.
 
-**Duración estimada total:** ~3 sprints (1 dev).
-**Fecha objetivo v1.0:** por definir.
+**Total estimated duration:** ~3 sprints (1 dev).
+**Target date for v1.0:** TBD.
 
-## 2. Pre-requisitos
+## 2. Prerequisites
 
-| Pre-requisito | Owner | Estado | Notas |
+| Prerequisite | Owner | Status | Notes |
 |---|---|---|---|
-| Specs aprobados (PRD/API/Tech/Data) | Ernesto | ☑ Borrador listo | Este directorio `specs/`. |
-| Toolchain: `uv`, Python 3.12, Reflex 0.9 | Ernesto | ☑ | Instalado con `uv`. |
-| Node/bun para build de `.web` | Reflex | ☐ | Lo gestiona `reflex run` (primera ejecución). |
-| Cuenta GitHub + `gh` autenticado | Ernesto | ☐ | Para `gh repo create`. |
+| Approved specs (PRD/API/Tech/Data) | Ernesto | ☑ Draft ready | This `specs/` directory. |
+| Toolchain: `uv`, Python 3.12, Reflex 0.9 | Ernesto | ☑ | Installed with `uv`. |
+| Node/bun for `.web` build | Reflex | ☐ | Managed by `reflex run` (first run). |
+| GitHub account + authenticated `gh` | Ernesto | ☐ | For `gh repo create`. |
 
-## 3. Fases de Implementación
+## 3. Implementation Phases
 
 ---
 
-### Fase 1: Fundaciones ✅ (hecho)
-**Objetivo:** base del proyecto reproducible.
+### Phase 1: Foundations ✅ (done)
+**Goal:** reproducible project foundation.
 
-| ID | Tarea | Estimación | Dependencia | Estado |
+| ID | Task | Estimate | Dependency | Status |
 |---|---|---|---|---|
 | F1-01 | `uv init` + pin Python 3.12 | 0.5d | — | ☑ |
 | F1-02 | `uv add reflex` + `reflex init` (blank) | 0.5d | F1-01 | ☑ |
-| F1-03 | Estructura de paquetes (`reflex_pragmatic_dnd/`) | 0.5d | F1-02 | ☑ |
-| F1-04 | `.gitignore`, README, repo git | 0.5d | F1-01 | ☑ |
+| F1-03 | Package structure (`reflex_pragmatic_dnd/`) | 0.5d | F1-02 | ☑ |
+| F1-04 | `.gitignore`, README, git repo | 0.5d | F1-01 | ☑ |
 
-**Done:** `uv run reflex run` arranca la app blank; el paquete importa.
+**Done:** `uv run reflex run` starts the blank app; the package imports.
 
 ---
 
-### Fase 2: Core wrappers ✅ (hecho)
-**Objetivo:** envolver el adaptador de elementos.
+### Phase 2: Core wrappers ✅ (done)
+**Goal:** wrap the element adapter.
 
-| ID | Tarea | Estimación | Dependencia | Estado |
+| ID | Task | Estimate | Dependency | Status |
 |---|---|---|---|---|
 | F2-01 | `pragmatic_dnd.jsx`: `PdndDraggable`, `PdndDropTarget`, `PdndMonitor` | 1.5d | F1-03 | ☑ |
 | F2-02 | `core.py`: `Draggable`/`DropTarget`/`Monitor` (`NoSSRComponent`) | 1d | F2-01 | ☑ |
-| F2-03 | Declarar `lib_dependencies` (`@atlaskit/*`) | 0.25d | F2-02 | ☑ |
-| F2-04 | API pública en `__init__.py` | 0.25d | F2-02 | ☑ |
-| F2-05 | Verificación: import + render del árbol de componentes | 0.5d | F2-04 | ☑ |
+| F2-03 | Declare `lib_dependencies` (`@atlaskit/*`) | 0.25d | F2-02 | ☑ |
+| F2-04 | Public API in `__init__.py` | 0.25d | F2-02 | ☑ |
+| F2-05 | Verification: import + render of the component tree | 0.5d | F2-04 | ☑ |
 
-**Done:** los componentes se construyen y `render()` no falla a nivel Reflex.
+**Done:** the components build and `render()` does not fail at the Reflex level.
 
 ---
 
-### Fase 3: Suite completa + ejemplo ✅ (hecho parcialmente)
-**Objetivo:** hitbox, auto-scroll y demo Kanban.
+### Phase 3: Full suite + example ✅ (partially done)
+**Goal:** hitbox, auto-scroll, and Kanban demo.
 
-| ID | Tarea | Estimación | Dependencia | Estado |
+| ID | Task | Estimate | Dependency | Status |
 |---|---|---|---|---|
-| F3-01 | Hitbox de borde más cercano en `PdndDropTarget` | 1d | F2-01 | ☑ |
+| F3-01 | Closest-edge hitbox in `PdndDropTarget` | 1d | F2-01 | ☑ |
 | F3-02 | `PdndScrollContainer` (auto-scroll) | 0.5d | F2-01 | ☑ |
-| F3-03 | App demo Kanban ordenable | 1d | F2-04 | ☑ |
-| F3-04 | Ejemplo de lista ordenable (`examples/`) | 0.5d | F3-03 | ☑ |
-| F3-05 | Prueba E2E manual `reflex run` en navegador | 0.5d | F3-03 | ☐ |
+| F3-03 | Sortable Kanban demo app | 1d | F2-04 | ☑ |
+| F3-04 | Sortable list example (`examples/`) | 0.5d | F3-03 | ☑ |
+| F3-05 | Manual E2E test `reflex run` in the browser | 0.5d | F3-03 | ☐ |
 
-**Done:** arrastrar tarjetas entre/within columnas reordena el estado.
-
----
-
-### Fase 4: Pulido, indicador y a11y ☐ (planificado)
-**Objetivo:** experiencia completa.
-
-| ID | Tarea | Estimación | Dependencia | Estado |
-|---|---|---|---|---|
-| F4-01 | Componente `DropIndicator` (react-drop-indicator estilizado) | 1.5d | F3-01 | ☐ |
-| F4-02 | Estados visuales (`data-over`, `data-dragging`) documentados con CSS | 0.5d | F3-03 | ☐ |
-| F4-03 | Adaptador externo (archivos/URLs) | 2d | F2-01 | ☐ |
-| F4-04 | Pruebas (pytest sobre wrappers + Playwright E2E) | 1.5d | F3-05 | ☐ |
-
-**Done:** indicador visible al reordenar; suite de tests verde.
+**Done:** dragging cards between/within columns reorders the state.
 
 ---
 
-### Fase 5: Empaquetado y publicación ☐ (planificado)
-**Objetivo:** distribuir.
+### Phase 4: Polish, indicator, and a11y ☐ (planned)
+**Goal:** complete experience.
 
-| ID | Tarea | Estimación | Dependencia | Estado |
+| ID | Task | Estimate | Dependency | Status |
 |---|---|---|---|---|
-| F5-01 | Metadatos de `pyproject.toml` para wheel (incluir `.jsx`) | 0.5d | F4-04 | ☐ |
-| F5-02 | `reflex component build` / `publish` a PyPI | 0.5d | F5-01 | ☐ |
+| F4-01 | `DropIndicator` component (styled react-drop-indicator) | 1.5d | F3-01 | ☐ |
+| F4-02 | Visual states (`data-over`, `data-dragging`) documented with CSS | 0.5d | F3-03 | ☑ (README) |
+| F4-03 | External adapter (files/URLs) | 2d | F2-01 | ☐ |
+| F4-04 | Tests (pytest over wrappers + Playwright E2E) | 1.5d | F3-05 | ◑ pytest ☑ / Playwright ☐ |
+
+**Done:** indicator visible while reordering; test suite green.
+
+**Implementation note (pytest):** the reordering logic from Data Model §4 was
+extracted to `reflex_pragmatic_dnd/reorder.py` (`move_card`, `reorder_list`) as
+pure functions and developed with TDD. Tests in `tests/`:
+`test_reorder.py` (reducers + API §4 edge cases), `test_demo_state.py`
+(Reflex states of the demo/example), `test_components.py` (wrapper contract).
+A discrepancy was discovered and fixed: dropping a card onto itself is now a
+no-op (API §4); previously it sent the card to the end of the column.
+
+---
+
+### Phase 5: Packaging and publishing ☐ (planned)
+**Goal:** distribute.
+
+| ID | Task | Estimate | Dependency | Status |
+|---|---|---|---|---|
+| F5-01 | `pyproject.toml` metadata for the wheel (include `.jsx`) | 0.5d | F4-04 | ☑ (hatchling) |
+| F5-02 | `reflex component build` / `publish` to PyPI | 0.5d | F5-01 | ☐ |
 | F5-03 | CI (GitHub Actions): lint + build + tests | 1d | F4-04 | ☐ |
-| F5-04 | Registro en Reflex Custom Components | 0.25d | F5-02 | ☐ |
+| F5-04 | Registration in Reflex Custom Components | 0.25d | F5-02 | ☐ |
 
-**Done:** `pip install reflex-pragmatic-dnd` funciona en un proyecto limpio.
+**Done:** `pip install reflex-pragmatic-dnd` works in a clean project.
 
-## 4. Criterios de Aceptación Global (v1.0)
-- Un usuario construye un Kanban ordenable copiando el ejemplo, sin escribir JS.
-- `reflex run` instala automáticamente los paquetes `@atlaskit` en `.web`.
-- Los 4 paquetes de la suite están envueltos o expuestos.
-- Specs versionados junto al código y referenciados por el plan.
+## 4. Global Acceptance Criteria (v1.0)
+- A user builds a sortable Kanban by copying the example, without writing any JS.
+- `reflex run` automatically installs the `@atlaskit` packages into `.web`.
+- All 4 packages in the suite are wrapped or exposed.
+- Specs versioned alongside the code and referenced by the plan.
 
-## 5. Dependencias entre Fases
+## 5. Dependencies Between Phases
 
 ```
 F1 ──▶ F2 ──▶ F3 ──▶ F4 ──▶ F5
