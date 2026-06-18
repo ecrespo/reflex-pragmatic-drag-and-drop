@@ -21,26 +21,8 @@ class ListState(rx.State):
 
     @rx.event
     def reorder(self, payload: dict):
-        source = payload.get("source") or {}
-        targets = payload.get("dropTargets") or []
-        sid = source.get("id")
-        if not sid or not targets:
-            return
-        target = targets[0]
-        tid = target.get("id")
-        if not tid or tid == sid:
-            return
-
-        items = [dict(x) for x in self.items]
-        moving = next((x for x in items if x["id"] == sid), None)
-        if not moving:
-            return
-        items = [x for x in items if x["id"] != sid]
-        idx = next((i for i, x in enumerate(items) if x["id"] == tid), len(items))
-        if target.get("closestEdge") == "bottom":
-            idx += 1
-        items.insert(idx, moving)
-        self.items = items
+        # Delegates to the tested pure reducer (reflex_pragmatic_dnd.reorder).
+        self.items = dnd.reorder_list(self.items, payload)
 
 
 def row(item: rx.Var) -> rx.Component:

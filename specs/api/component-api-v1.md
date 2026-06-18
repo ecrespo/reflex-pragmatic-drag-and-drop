@@ -2,107 +2,107 @@
 
 ## Metadata
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Autor** | Ernesto (ecrespo) |
-| **Estado** | `DRAFT` |
-| **Versión API** | v1.0 |
-| **Fecha** | 2026-06-14 |
-| **PRD Relacionado** | ../prd/reflex-pragmatic-dnd.md |
+| **Author** | Ernesto (ecrespo) |
+| **Status** | `DRAFT` |
+| **API Version** | v1.0 |
+| **Date** | 2026-06-14 |
+| **Related PRD** | ../prd/reflex-pragmatic-dnd.md |
 
 ---
 
-## 1. Visión General
+## 1. Overview
 
-El "API" de esta librería es su **superficie de componentes Python**: las clases y
-factorías que el desarrollador importa desde `reflex_pragmatic_dnd`, sus props y
-sus manejadores de eventos. Hace las veces de contrato entre la librería y la app
-del usuario. No hay API HTTP.
+The "API" of this library is its **Python component surface**: the classes and
+factories the developer imports from `reflex_pragmatic_dnd`, their props and
+their event handlers. It acts as the contract between the library and the user's
+app. There is no HTTP API.
 
-Importación:
+Import:
 
 ```python
 import reflex_pragmatic_dnd as dnd
 # dnd.draggable, dnd.drop_target, dnd.monitor, dnd.scroll_container
 ```
 
-## 2. Componentes
+## 2. Components
 
 ### 2.1 `draggable(*children, **props)` → `Draggable`
 
-Envuelve `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
+Wraps `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
 
-| Prop | Tipo Python | Requerido | Descripción |
+| Prop | Python Type | Required | Description |
 |---|---|---|---|
-| `drag_id` | `str` | Sí | Identificador estable del ítem; viaja en cada evento. |
-| `item_data` | `dict` | No | Payload arbitrario JSON-serializable adjunto al arrastre. |
-| `drag_handle_selector` | `str` | No | Selector CSS interno usado como "agarre"; por defecto, todo el elemento. |
+| `drag_id` | `str` | Yes | Stable identifier for the item; travels in every event. |
+| `item_data` | `dict` | No | Arbitrary JSON-serializable payload attached to the drag. |
+| `drag_handle_selector` | `str` | No | Internal CSS selector used as the "handle"; defaults to the whole element. |
 
-**Eventos**
+**Events**
 
-| Evento | Payload | Cuándo |
+| Event | Payload | When |
 |---|---|---|
-| `on_drag_start` | `{ "dragId": str, "itemData": dict }` | Comienza el arrastre. |
-| `on_drop` | `{ "dragId": str, "itemData": dict }` | Termina (soltado o cancelado). |
+| `on_drag_start` | `{ "dragId": str, "itemData": dict }` | The drag begins. |
+| `on_drop` | `{ "dragId": str, "itemData": dict }` | It ends (dropped or canceled). |
 
 ### 2.2 `drop_target(*children, **props)` → `DropTarget`
 
-Envuelve `dropTargetForElements` + (opcional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge`.
+Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge`.
 
-| Prop | Tipo Python | Requerido | Descripción |
+| Prop | Python Type | Required | Description |
 |---|---|---|---|
-| `drop_id` | `str` | Sí | Identificador del objetivo. |
-| `target_data` | `dict` | No | Datos del objetivo, incluidos en el payload de soltado. |
-| `with_closest_edge` | `bool` | No (def. `False`) | Activa el hitbox de borde más cercano. |
-| `allowed_edges` | `list[str]` | No (def. `["top","bottom"]`) | Bordes considerados: `top`/`bottom`/`left`/`right`. |
+| `drop_id` | `str` | Yes | Identifier of the target. |
+| `target_data` | `dict` | No | Target data, included in the drop payload. |
+| `with_closest_edge` | `bool` | No (default `False`) | Enables the closest-edge hitbox. |
+| `allowed_edges` | `list[str]` | No (default `["top","bottom"]`) | Edges considered: `top`/`bottom`/`left`/`right`. |
 
-**Eventos**
+**Events**
 
-| Evento | Payload | Cuándo |
+| Event | Payload | When |
 |---|---|---|
-| `on_drag_enter` | `{ "dropId", "closestEdge"\|null, "source": dict }` | El puntero entra al objetivo. |
-| `on_drag_leave` | `{ "dropId" }` | El puntero sale. |
-| `on_drop` | `{ "dropId", "closestEdge"\|null, "source": dict, "target": dict }` | Se suelta sobre el objetivo. |
+| `on_drag_enter` | `{ "dropId", "closestEdge"\|null, "source": dict }` | The pointer enters the target. |
+| `on_drag_leave` | `{ "dropId" }` | The pointer leaves. |
+| `on_drop` | `{ "dropId", "closestEdge"\|null, "source": dict, "target": dict }` | It is dropped on the target. |
 
-**Atributos del DOM expuestos para estilizar (CSS):**
+**DOM attributes exposed for styling (CSS):**
 `data-over="true|false"`, `data-closest-edge="top|bottom|..."`, `data-drop-id`.
 
 ### 2.3 `monitor(**props)` → `Monitor`
 
-Envuelve `monitorForElements`. No renderiza huella visible.
+Wraps `monitorForElements`. Renders no visible footprint.
 
-**Eventos**
+**Events**
 
-| Evento | Payload | Cuándo |
+| Event | Payload | When |
 |---|---|---|
-| `on_drag_start` | `{ "source": dict }` | Cualquier arrastre en la página comienza. |
-| `on_drop` | `{ "source": dict, "dropTargets": list[dict], "target": dict\|null }` | Cualquier arrastre termina. `dropTargets[0]` es el objetivo más interno. |
+| `on_drag_start` | `{ "source": dict }` | Any drag on the page begins. |
+| `on_drop` | `{ "source": dict, "dropTargets": list[dict], "target": dict\|null }` | Any drag ends. `dropTargets[0]` is the innermost target. |
 
 ### 2.4 `scroll_container(*children, **props)` → `ScrollContainer`
 
-Envuelve `combine(dropTargetForElements, autoScrollForElements)`. Hace auto-scroll
-mientras se arrastra cerca de los bordes del contenedor. Sin eventos propios en v1.0.
+Wraps `combine(dropTargetForElements, autoScrollForElements)`. Auto-scrolls
+while dragging near the container edges. No events of its own in v1.0.
 
-## 3. Convenciones
+## 3. Conventions
 
-- **Serialización:** el *glue* aplica `JSON.parse(JSON.stringify(...))` a todo
-  payload antes de enviarlo a Python; valores no serializables se descartan.
-- **Nombres:** props en `snake_case` (Python) ↔ props React en `camelCase` (mapeo
-  automático de Reflex). Las claves *dentro* de los payloads usan `camelCase`
-  (`dragId`, `closestEdge`) por venir del lado JS.
-- **Identificadores:** `drag_id`/`drop_id` deben ser únicos y estables entre
-  renders para que el reordenamiento sea correcto.
+- **Serialization:** the *glue* applies `JSON.parse(JSON.stringify(...))` to every
+  payload before sending it to Python; non-serializable values are discarded.
+- **Naming:** props in `snake_case` (Python) ↔ React props in `camelCase`
+  (automatic Reflex mapping). The keys *inside* the payloads use `camelCase`
+  (`dragId`, `closestEdge`) because they come from the JS side.
+- **Identifiers:** `drag_id`/`drop_id` must be unique and stable across
+  renders so that reordering works correctly.
 
-## 4. Errores y Casos Borde
+## 4. Errors and Edge Cases
 
-| Caso | Comportamiento esperado |
+| Case | Expected behavior |
 |---|---|
-| Soltar fuera de cualquier `DropTarget` | `Monitor.on_drop` con `dropTargets == []`; el handler debe ignorar. |
-| `item_data` con objetos no serializables | Se descartan silenciosamente (sanitización en cliente). |
-| Soltar un ítem sobre sí mismo | `target.cardId == source.cardId`; el handler debe no-op. |
-| Componente renderizado en SSR | Evitado: las clases son `NoSSRComponent` (import dinámico). |
+| Dropping outside any `DropTarget` | `Monitor.on_drop` with `dropTargets == []`; the handler should ignore it. |
+| `item_data` with non-serializable objects | They are silently discarded (client-side sanitization). |
+| Dropping an item onto itself | `target.cardId == source.cardId`; the handler should no-op. |
+| Component rendered under SSR | Avoided: the classes are `NoSSRComponent` (dynamic import). |
 
-## 5. Ejemplo mínimo (contrato en uso)
+## 5. Minimal example (the contract in use)
 
 ```python
 import reflex as rx
@@ -117,8 +117,8 @@ class S(rx.State):
 def page():
     return rx.box(
         dnd.monitor(on_drop=S.on_drop),
-        dnd.draggable(rx.text("Arrástrame"), drag_id="a", item_data={"cardId": "a"}),
-        dnd.drop_target(rx.text("Suéltalo aquí"), drop_id="z",
+        dnd.draggable(rx.text("Drag me"), drag_id="a", item_data={"cardId": "a"}),
+        dnd.drop_target(rx.text("Drop it here"), drop_id="z",
                         target_data={"kind": "zone"}),
         rx.text(S.msg),
     )

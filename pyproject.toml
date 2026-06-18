@@ -1,9 +1,74 @@
 [project]
 name = "reflex-pragmatic-drag-and-drop"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reflex bindings for Atlassian Pragmatic drag and drop (sortable lists, Kanban) in pure Python"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Ernesto Crespo", email = "ecrespo@gmail.com" },
+]
+keywords = [
+    "reflex",
+    "reflex-custom-components",
+    "drag-and-drop",
+    "dnd",
+    "pragmatic-drag-and-drop",
+    "kanban",
+    "sortable",
+    "atlaskit",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
 dependencies = [
     "reflex>=0.9.5.post2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ecrespo/reflex-pragmatic-drag-and-drop"
+Repository = "https://github.com/ecrespo/reflex-pragmatic-drag-and-drop"
+Issues = "https://github.com/ecrespo/reflex-pragmatic-drag-and-drop/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.0",
+    # `reflex component build` needs `build`; `twine` is the publish fallback to `uv publish`.
+    "build>=1.2.1",
+    "twine>=5.1.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Ship only the library package. The React glue (`pragmatic_dnd.jsx`) lives
+# inside it and is a non-Python file, so it must be force-included in the wheel
+# (F5-01: include `.jsx`). The demo app and `examples/` are not distributed.
+packages = ["reflex_pragmatic_dnd"]
+artifacts = ["reflex_pragmatic_dnd/*.jsx"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "reflex_pragmatic_dnd",
+    "examples",
+    "specs",
+    "README.md",
+    "LICENSE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+

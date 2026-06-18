@@ -2,22 +2,22 @@
 
 ## Metadata
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Autor** | Ernesto (ecrespo) |
-| **Estado** | `DRAFT` |
-| **Versión** | 1.0 |
-| **Fecha** | 2026-06-14 |
-| **Almacenamiento** | En memoria (`rx.State`) — sin base de datos |
-| **Tech Design Relacionado** | ../technical/architecture.md |
+| **Author** | Ernesto (ecrespo) |
+| **Status** | `DRAFT` |
+| **Version** | 1.0 |
+| **Date** | 2026-06-14 |
+| **Storage** | In memory (`rx.State`) — no database |
+| **Related Tech Design** | ../technical/architecture.md |
 
 ---
 
-## 1. Visión General del Modelo
+## 1. Model Overview
 
-Esta librería no persiste datos: el "modelo de datos" son (a) los **payloads de
-evento** que cruzan el WebSocket cliente→servidor y (b) el **estado de aplicación**
-que el desarrollador mantiene en `rx.State`. Todos los payloads son JSON.
+This library does not persist data: the "data model" consists of (a) the **event
+payloads** that travel over the WebSocket from client→server and (b) the **application
+state** that the developer maintains in `rx.State`. All payloads are JSON.
 
 ```
 Draggable ──(getInitialData)──▶ source        ┐
@@ -25,38 +25,38 @@ DropTarget ─(getData+hitbox)──▶ target/edge   ├─▶ Monitor.onDrop �
                                               ┘
 ```
 
-## 2. Estructuras de Payload
+## 2. Payload Structures
 
-### 2.1 `SourceData` (datos del ítem arrastrado)
+### 2.1 `SourceData` (data of the dragged item)
 
-Construido por `Draggable.getInitialData`. Forma base + lo que el usuario pase en `item_data`.
+Built by `Draggable.getInitialData`. Base shape + whatever the user passes in `item_data`.
 
 ```json
 {
-  "dragId": "string (== drag_id del componente)",
-  "...itemData": "claves arbitrarias provistas por el usuario"
+  "dragId": "string (== component's drag_id)",
+  "...itemData": "arbitrary keys provided by the user"
 }
 ```
 
-| Campo | Tipo | Origen | Notas |
+| Field | Type | Source | Notes |
 |---|---|---|---|
-| `dragId` | string | `drag_id` | Requerido, estable. |
-| `*` (extra) | JSON | `item_data` | Pequeño y serializable. |
+| `dragId` | string | `drag_id` | Required, stable. |
+| `*` (extra) | JSON | `item_data` | Small and serializable. |
 
-### 2.2 `TargetData` (datos del objetivo de soltado)
+### 2.2 `TargetData` (data of the drop target)
 
-Construido por `DropTarget.getData`; si `with_closest_edge`, incluye el símbolo de
-borde (extraído como string en los payloads).
+Built by `DropTarget.getData`; if `with_closest_edge`, it includes the edge symbol
+(extracted as a string in the payloads).
 
 ```json
 {
   "dropId": "string (== drop_id)",
-  "...targetData": "claves arbitrarias provistas por el usuario",
+  "...targetData": "arbitrary keys provided by the user",
   "closestEdge": "top | bottom | left | right | null"
 }
 ```
 
-### 2.3 Payload de `Monitor.on_drop`
+### 2.3 `Monitor.on_drop` payload
 
 ```json
 {
@@ -69,22 +69,22 @@ borde (extraído como string en los payloads).
 }
 ```
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |---|---|---|
-| `source` | object | `SourceData` del ítem arrastrado. |
-| `dropTargets` | array | Objetivos atravesados, **del más interno al más externo**. |
-| `target` | object\|null | `dropTargets[0]` por conveniencia. |
+| `source` | object | `SourceData` of the dragged item. |
+| `dropTargets` | array | Targets traversed, **from innermost to outermost**. |
+| `target` | object\|null | `dropTargets[0]` for convenience. |
 
-### 2.4 Payload de `DropTarget.on_drop` / `on_drag_enter`
+### 2.4 `DropTarget.on_drop` / `on_drag_enter` payload
 
 ```json
 { "dropId": "z", "closestEdge": "top|null", "source": { }, "target": { } }
 ```
 
-## 3. Estado de Aplicación de Referencia (demo Kanban)
+## 3. Reference Application State (Kanban demo)
 
-Definido por el usuario en `rx.State` (no por la librería). Documentado aquí para
-mostrar el patrón de consumo.
+Defined by the user in `rx.State` (not by the library). Documented here to
+show the consumption pattern.
 
 ```python
 cards: dict[str, list[dict]] = {
@@ -94,35 +94,35 @@ cards: dict[str, list[dict]] = {
 }
 ```
 
-| Entidad | Forma | Relación |
+| Entity | Shape | Relationship |
 |---|---|---|
-| `Column` | clave string (`todo`/`doing`/`done`) | 1:N con `Card` |
-| `Card` | `{ "id": str, "title": str }` | pertenece a una columna |
+| `Column` | string key (`todo`/`doing`/`done`) | 1:N with `Card` |
+| `Card` | `{ "id": str, "title": str }` | belongs to a column |
 
-### Invariantes
-- `Card.id` único en todo el board (necesario para `drag_id`).
-- El orden dentro de cada lista **es** el orden visual (índice = posición).
-- Las mutaciones reasignan `self.cards` (Reflex detecta cambios por reasignación, no por mutación in-place).
+### Invariants
+- `Card.id` unique across the whole board (required for `drag_id`).
+- The order within each list **is** the visual order (index = position).
+- Mutations reassign `self.cards` (Reflex detects changes by reassignment, not by in-place mutation).
 
-## 4. Reglas de Transformación (handle_drop)
+## 4. Transformation Rules (handle_drop)
 
 ```
-entrada: payload (sección 2.3)
-1. source.cardId requerido y dropTargets no vacío, si no → no-op.
-2. to_col = (col_target ?? card_target).column ; debe existir en COLUMNS.
-3. Reconstruir board inmutable; extraer la card por id.
-4. Si card_target y card_target.cardId != source.cardId:
-     idx = posición de card_target.cardId
-     si closestEdge == "bottom": idx += 1
-     insertar en idx
-   si no: append al final de to_col.
-5. self.cards = board   # reasignación → reactividad
+input: payload (section 2.3)
+1. source.cardId required and dropTargets non-empty, otherwise → no-op.
+2. to_col = (col_target ?? card_target).column ; must exist in COLUMNS.
+3. Rebuild board immutably; extract the card by id.
+4. If card_target and card_target.cardId != source.cardId:
+     idx = position of card_target.cardId
+     if closestEdge == "bottom": idx += 1
+     insert at idx
+   otherwise: append to the end of to_col.
+5. self.cards = board   # reassignment → reactivity
 ```
 
-## 5. Consideraciones de Serialización
+## 5. Serialization Considerations
 
-- El cliente aplica `JSON.parse(JSON.stringify(...))` (`clean()`); cualquier valor no
-  serializable (funciones, símbolos, referencias circulares) se descarta.
-- El borde más cercano es un `Symbol` en Pragmatic; se exporta como `string` para
-  poder cruzar el socket.
-- Mantener `item_data`/`target_data` pequeños (ids y metadatos), no objetos pesados.
+- The client applies `JSON.parse(JSON.stringify(...))` (`clean()`); any non-serializable
+  value (functions, symbols, circular references) is discarded.
+- The closest edge is a `Symbol` in Pragmatic; it is exported as a `string` so it can
+  cross the socket.
+- Keep `item_data`/`target_data` small (ids and metadata), not heavy objects.

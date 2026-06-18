@@ -2,128 +2,129 @@
 
 ## Product Requirements Document (PRD)
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Autor** | Ernesto (ecrespo) |
-| **Estado** | `DRAFT` |
-| **Versión** | 1.0 |
-| **Fecha** | 2026-06-14 |
+| **Author** | Ernesto (ecrespo) |
+| **Status** | `DRAFT` |
+| **Version** | 1.0 |
+| **Date** | 2026-06-14 |
 | **Reviewers** | — |
-| **Última actualización** | 2026-06-14 |
+| **Last updated** | 2026-06-14 |
 
 ---
 
-## 1. Resumen Ejecutivo
+## 1. Executive Summary
 
-`reflex-pragmatic-drag-and-drop` es una librería de componentes para [Reflex](https://reflex.dev)
-que expone, en Python puro, las capacidades de [Pragmatic drag and drop](https://github.com/atlassian/pragmatic-drag-and-drop)
-de Atlassian: un *toolchain* de arrastrar-y-soltar de bajo nivel, agnóstico del framework,
-construido sobre la API nativa de drag and drop del navegador.
+`reflex-pragmatic-drag-and-drop` is a component library for [Reflex](https://reflex.dev)
+that exposes, in pure Python, the capabilities of Atlassian's
+[Pragmatic drag and drop](https://github.com/atlassian/pragmatic-drag-and-drop):
+a low-level, framework-agnostic drag-and-drop *toolchain*
+built on top of the browser's native drag and drop API.
 
-El objetivo es que un desarrollador de Reflex pueda construir experiencias de
-drag and drop (listas ordenables, tableros Kanban, reordenamiento de árboles,
-auto-scroll) **sin escribir JavaScript**, usando componentes y manejadores de
-eventos idiomáticos de Reflex. La librería envuelve la familia completa de
-paquetes `@atlaskit/pragmatic-drag-and-drop-*` (core, hitbox, auto-scroll,
+The goal is for a Reflex developer to be able to build drag and drop
+experiences (sortable lists, Kanban boards, tree reordering,
+auto-scroll) **without writing JavaScript**, using idiomatic Reflex
+components and event handlers. The library wraps the complete family of
+`@atlaskit/pragmatic-drag-and-drop-*` packages (core, hitbox, auto-scroll,
 react-drop-indicator).
 
-## 2. Contexto y Problema
+## 2. Context and Problem
 
-### 2.1 Situación Actual
-Reflex no incluye primitivas de drag and drop. Quien las necesita debe envolver
-manualmente una librería JS de React (HTML5 DnD, dnd-kit, react-dnd…) siguiendo
-el flujo de "Wrapping React", lo cual exige conocimiento de React, hooks y del
-sistema de assets de Reflex.
+### 2.1 Current Situation
+Reflex does not include drag and drop primitives. Anyone who needs them must
+manually wrap a React JS library (HTML5 DnD, dnd-kit, react-dnd…) following
+the "Wrapping React" flow, which requires knowledge of React, hooks, and the
+Reflex assets system.
 
-### 2.2 Problema
-Pragmatic drag and drop es hoy una de las mejores opciones (rendimiento, peso,
-accesibilidad, independencia del framework) pero su API está pensada para
-imperativamente adjuntar comportamiento a elementos del DOM vía `useEffect` y
-funciones de limpieza. Trasladar ese modelo a Reflex (estado en Python,
-renderizado declarativo) no es trivial y se reimplementa una y otra vez.
+### 2.2 Problem
+Pragmatic drag and drop is today one of the best options (performance, size,
+accessibility, framework independence), but its API is designed to
+imperatively attach behavior to DOM elements via `useEffect` and
+cleanup functions. Porting that model to Reflex (state in Python,
+declarative rendering) is not trivial and gets reimplemented over and over.
 
-### 2.3 Oportunidad
-Empaquetar una sola vez el *glue* React→Reflex y publicarlo como librería
-reutilizable: API estable en Python, eventos serializables, y ejemplos listos
-para copiar (Kanban, lista ordenable).
+### 2.3 Opportunity
+Package the React→Reflex *glue* once and publish it as a reusable
+library: a stable Python API, serializable events, and ready-to-copy
+examples (Kanban, sortable list).
 
-## 3. Usuarios Objetivo
+## 3. Target Users
 
-### Persona 1: Desarrollador Reflex de producto
-- **Descripción:** construye dashboards y herramientas internas con Reflex.
-- **Necesidad principal:** tableros y listas reordenables sin tocar JS.
-- **Frecuencia de uso:** recurrente durante el desarrollo de features.
-- **Nivel técnico:** medio (Python alto, JS bajo).
+### Persona 1: Reflex product developer
+- **Description:** builds dashboards and internal tools with Reflex.
+- **Primary need:** reorderable boards and lists without touching JS.
+- **Usage frequency:** recurring during feature development.
+- **Technical level:** medium (high Python, low JS).
 
-### Persona 2: Mantenedor de librerías de componentes Reflex
-- **Descripción:** publica componentes para la comunidad Reflex.
-- **Necesidad principal:** un patrón de referencia para envolver librerías JS
-  basadas en refs/efectos y exponerlas con eventos tipados.
-- **Nivel técnico:** alto.
+### Persona 2: Maintainer of Reflex component libraries
+- **Description:** publishes components for the Reflex community.
+- **Primary need:** a reference pattern for wrapping JS libraries
+  based on refs/effects and exposing them with typed events.
+- **Technical level:** high.
 
-## 4. Objetivos y Métricas de Éxito
+## 4. Goals and Success Metrics
 
-### 4.1 Objetivos del Producto
+### 4.1 Product Goals
 
-| Objetivo | Métrica | Target | Plazo |
+| Goal | Metric | Target | Deadline |
 |---|---|---|---|
-| Cubrir la suite completa | Paquetes `@atlaskit` envueltos | 4/4 (core, hitbox, auto-scroll, drop-indicator) | v1.0 |
-| Onboarding rápido | Tiempo a primer board funcional | < 15 min copiando el ejemplo | v1.0 |
-| Cero JS para el usuario | Líneas de JS en el app del usuario | 0 | v1.0 |
+| Cover the full suite | `@atlaskit` packages wrapped | 4/4 (core, hitbox, auto-scroll, drop-indicator) | v1.0 |
+| Fast onboarding | Time to first working board | < 15 min by copying the example | v1.0 |
+| Zero JS for the user | Lines of JS in the user's app | 0 | v1.0 |
 
-### 4.2 Objetivos de Usuario
+### 4.2 User Goals
 
-| Objetivo del Usuario | Indicador |
+| User Goal | Indicator |
 |---|---|
-| Crear una lista ordenable | API `draggable` + `drop_target(with_closest_edge=True)` |
-| Mover ítems entre contenedores | Un único `monitor(on_drop=...)` |
-| Scroll automático en listas largas | `scroll_container` |
+| Create a sortable list | `draggable` + `drop_target(with_closest_edge=True)` API |
+| Move items between containers | A single `monitor(on_drop=...)` |
+| Automatic scroll in long lists | `scroll_container` |
 
-## 5. Alcance
+## 5. Scope
 
-### 5.1 In Scope (Incluido)
-- [x] Componente `Draggable` (registra un elemento como arrastrable, con `item_data`).
-- [x] Componente `DropTarget` (objetivo de soltado, con hitbox de borde más cercano).
-- [x] Componente `Monitor` (escucha global de operaciones de drag).
-- [x] Componente `ScrollContainer` (auto-scroll durante el arrastre).
-- [x] Eventos: `on_drag_start`, `on_drop`, `on_drag_enter`, `on_drag_leave`.
-- [x] Empaquetado del *glue* JSX vía `rx.asset` + dependencias npm declaradas.
-- [x] Ejemplo Kanban ordenable y ejemplo de lista.
+### 5.1 In Scope
+- [x] `Draggable` component (registers an element as draggable, with `item_data`).
+- [x] `DropTarget` component (drop target, with closest-edge hitbox).
+- [x] `Monitor` component (global listener for drag operations).
+- [x] `ScrollContainer` component (auto-scroll during the drag).
+- [x] Events: `on_drag_start`, `on_drop`, `on_drag_enter`, `on_drag_leave`.
+- [x] Packaging of the JSX *glue* via `rx.asset` + declared npm dependencies.
+- [x] Sortable Kanban example and list example.
 
-### 5.2 Out of Scope (Excluido)
-- Adaptadores de texto y de archivos externos (`text/adapter`, external) — futura iteración.
-- Indicadores de soltado avanzados con `react-drop-indicator` *estilizados* (se expone el borde; el render del indicador queda a cargo del usuario en v1.0).
-- Soporte de teclado / accesibilidad avanzada más allá de lo que provee el core.
-- Persistencia del estado (responsabilidad de la app del usuario).
+### 5.2 Out of Scope
+- Text and external file adapters (`text/adapter`, external) — future iteration.
+- Advanced *styled* drop indicators with `react-drop-indicator` (the edge is exposed; rendering the indicator is the user's responsibility in v1.0).
+- Keyboard support / advanced accessibility beyond what the core provides.
+- State persistence (responsibility of the user's app).
 
-### 5.3 Futuras Consideraciones
-- Componente `DropIndicator` estilizado envolviendo `@atlaskit/...-react-drop-indicator`.
-- Adaptador externo (arrastrar archivos/URLs desde fuera del navegador).
-- Publicación en PyPI como `reflex-pragmatic-dnd` y registro de componentes Reflex.
+### 5.3 Future Considerations
+- Styled `DropIndicator` component wrapping `@atlaskit/...-react-drop-indicator`.
+- External adapter (dragging files/URLs from outside the browser).
+- Publication on PyPI as `reflex-pragmatic-dnd` and registration in the Reflex component registry.
 
-## 6. Requisitos Funcionales
+## 6. Functional Requirements
 
-### RF-001: Declarar un elemento arrastrable
-- **Descripción:** el sistema debe permitir marcar cualquier subárbol de componentes como arrastrable y adjuntarle datos.
-- **Actor:** desarrollador.
-- **Precondiciones:** componente montado en cliente (NoSSR).
-- **Flujo principal:** `draggable(child, drag_id=..., item_data={...})` → al iniciar/terminar el arrastre se emiten `on_drag_start`/`on_drop` con el payload.
-- **Criterio de aceptación:** el handler de Python recibe `dragId` e `item_data`.
+### RF-001: Declare a draggable element
+- **Description:** the system must allow marking any component subtree as draggable and attaching data to it.
+- **Actor:** developer.
+- **Preconditions:** component mounted on the client (NoSSR).
+- **Main flow:** `draggable(child, drag_id=..., item_data={...})` → when the drag starts/ends, `on_drag_start`/`on_drop` are emitted with the payload.
+- **Acceptance criterion:** the Python handler receives `dragId` and `item_data`.
 
-### RF-002: Declarar un objetivo de soltado con borde
-- **Descripción:** registrar un drop target que, opcionalmente, reporte el borde más cercano (top/bottom/left/right) para reordenar.
-- **Criterio de aceptación:** `on_drop` incluye `closestEdge`, `source` y `target`.
+### RF-002: Declare a drop target with edge
+- **Description:** register a drop target that, optionally, reports the closest edge (top/bottom/left/right) for reordering.
+- **Acceptance criterion:** `on_drop` includes `closestEdge`, `source`, and `target`.
 
-### RF-003: Escucha global con Monitor
-- **Descripción:** un único componente sin huella en el DOM que reporta `source` y la pila de `dropTargets` de cada operación.
-- **Criterio de aceptación:** un solo handler puede recolocar un ítem en cualquier columna.
+### RF-003: Global listening with Monitor
+- **Description:** a single component with no DOM footprint that reports the `source` and the `dropTargets` stack of each operation.
+- **Acceptance criterion:** a single handler can relocate an item into any column.
 
 ### RF-004: Auto-scroll
-- **Descripción:** contenedor que hace scroll automático cuando se arrastra cerca de sus bordes.
-- **Criterio de aceptación:** listas más altas que el viewport hacen scroll durante el arrastre.
+- **Description:** a container that scrolls automatically when dragging near its edges.
+- **Acceptance criterion:** lists taller than the viewport scroll during the drag.
 
-## 7. Requisitos No Funcionales
-- **RNF-01 (Compatibilidad):** Reflex ≥ 0.9, Python ≥ 3.12.
-- **RNF-02 (Cero JS de usuario):** toda la lógica JS vive en el *glue* empaquetado.
-- **RNF-03 (Serializable):** todo payload de evento debe ser JSON-serializable (se sanitiza en el cliente).
-- **RNF-04 (SSR-safe):** los componentes son `NoSSRComponent` (usan `document`).
+## 7. Non-Functional Requirements
+- **RNF-01 (Compatibility):** Reflex ≥ 0.9, Python ≥ 3.12.
+- **RNF-02 (Zero user JS):** all JS logic lives in the packaged *glue*.
+- **RNF-03 (Serializable):** every event payload must be JSON-serializable (sanitized on the client).
+- **RNF-04 (SSR-safe):** the components are `NoSSRComponent` (they use `document`).

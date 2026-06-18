@@ -33,48 +33,33 @@ class KanbanState(rx.State):
 
     @rx.event
     def handle_drop(self, payload: dict):
-        """Global drop handler fed by the Monitor component."""
-        source = payload.get("source") or {}
-        targets = payload.get("dropTargets") or []
-        card_id = source.get("cardId")
-        if not card_id or not targets:
-            return
+        """Global drop handler fed by the Monitor component.
 
-        card_target = next((t for t in targets if t.get("kind") == "card"), None)
-        col_target = next((t for t in targets if t.get("kind") == "column"), None)
-        # The column drop target carries the destination column id.
-        to_col = (col_target or card_target or {}).get("column")
-        if to_col not in COLUMNS:
-            return
+        The reordering logic lives in the tested, pure ``move_card`` reducer
+        (see ``reflex_pragmatic_dnd/reorder.py`` and data-model §4).
+        """
+        new_cards = dnd.move_card(self.cards, payload, columns=COLUMNS)
+        if new_cards is self.cards:
+            return  # no-op (drop outside a target, onto self, etc.)
 
-        # Rebuild the board immutably so Reflex detects the change.
-        board = {c: [dict(x) for x in self.cards[c]] for c in COLUMNS}
-        moving = None
-        for col in COLUMNS:
-            for i, item in enumerate(board[col]):
-                if item["id"] == card_id:
-                    moving = board[col].pop(i)
-                    break
-            if moving:
-                break
-        if not moving:
-            return
-
-        dest = board[to_col]
-        if card_target and card_target.get("cardId") != card_id:
-            # Reorder relative to the hovered card using the closest edge.
-            idx = next(
-                (i for i, x in enumerate(dest) if x["id"] == card_target["cardId"]),
-                len(dest),
-            )
-            if card_target.get("closestEdge") == "bottom":
-                idx += 1
-            dest.insert(idx, moving)
-        else:
-            dest.append(moving)
-
-        self.cards = board
-        self.last_event = f"Moved '{moving['title']}' -> {COLUMN_TITLES[to_col]}"
+        # Reassign so Reflex detects the change and report what moved.
+        card_id = (payload.get("source") or {}).get("cardId")
+        moved = next(
+            (
+                c
+                for col in COLUMNS
+                for c in new_cards[col]
+                if c["id"] == card_id
+            ),
+            None,
+        )
+        dest = next(
+            (col for col in COLUMNS if any(c["id"] == card_id for c in new_cards[col])),
+            None,
+        )
+        self.cards = new_cards
+        if moved and dest:
+            self.last_event = f"Moved '{moved['title']}' -> {COLUMN_TITLES[dest]}"
 
 
 def card(item: rx.Var) -> rx.Component:

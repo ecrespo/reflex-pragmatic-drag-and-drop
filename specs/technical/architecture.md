@@ -2,51 +2,52 @@
 
 ## Metadata
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
-| **Autor** | Ernesto (ecrespo) |
-| **Estado** | `DRAFT` |
-| **Versión** | 1.0 |
-| **Fecha** | 2026-06-14 |
-| **PRD Relacionado** | ../prd/reflex-pragmatic-dnd.md |
-| **API Spec Relacionado** | ../api/component-api-v1.md |
+| **Author** | Ernesto (ecrespo) |
+| **Status** | `DRAFT` |
+| **Version** | 1.0 |
+| **Date** | 2026-06-14 |
+| **Related PRD** | ../prd/reflex-pragmatic-dnd.md |
+| **Related API Spec** | ../api/component-api-v1.md |
 
 ---
 
-## 1. Contexto
+## 1. Context
 
-Reflex compila componentes Python a React y sirve un backend FastAPI; el estado
-vive en Python y se sincroniza por WebSocket. Pragmatic drag and drop, en cambio,
-es imperativo: se *adjunta* a un `HTMLElement` (`draggable({element, ...})`) y
-devuelve una función de limpieza. El reto técnico es tender un puente entre el
-modelo declarativo de Reflex y el modelo imperativo basado en refs/efectos de
-Pragmatic, manteniendo los payloads serializables para cruzar el WebSocket.
+Reflex compiles Python components to React and serves a FastAPI backend; state
+lives in Python and is synchronized over WebSocket. Pragmatic drag and drop, by
+contrast, is imperative: it *attaches* to an `HTMLElement`
+(`draggable({element, ...})`) and returns a cleanup function. The technical
+challenge is to bridge Reflex's declarative model with Pragmatic's imperative,
+refs/effects-based model, while keeping payloads serializable so they can cross
+the WebSocket.
 
-La estrategia elegida es un **glue de React local** (`pragmatic_dnd.jsx`) empaquetado
-con la librería mediante `rx.asset`, y un conjunto de **wrappers Python**
-(`NoSSRComponent`) que exponen props y `EventHandler`.
+The chosen strategy is a **local React glue** (`pragmatic_dnd.jsx`) bundled with
+the library via `rx.asset`, plus a set of **Python wrappers**
+(`NoSSRComponent`) that expose props and `EventHandler`.
 
-## 2. Objetivos Técnicos
+## 2. Technical Goals
 
-- **Correctitud:** cada efecto registra y limpia su suscripción (`return cleanup`) para no fugar listeners entre renders.
-- **Rendimiento:** el JS de Atlassian corre nativo en el cliente; Reflex solo recibe eventos discretos (start/drop), no el movimiento continuo.
-- **Mantenibilidad:** un único archivo de glue + wrappers delgados; versiones npm pineadas.
-- **Portabilidad:** sin dependencia de SSR; serialización defensiva de payloads.
+- **Correctness:** every effect registers and cleans up its subscription (`return cleanup`) so listeners do not leak between renders.
+- **Performance:** the Atlassian JS runs natively on the client; Reflex only receives discrete events (start/drop), not the continuous movement.
+- **Maintainability:** a single glue file + thin wrappers; pinned npm versions.
+- **Portability:** no SSR dependency; defensive serialization of payloads.
 
-## 3. Arquitectura Propuesta
+## 3. Proposed Architecture
 
-### 3.1 Diagrama de Alto Nivel
+### 3.1 High-Level Diagram
 
 ```
-┌─────────────────────────────┐      compila a       ┌──────────────────────────────┐
-│  App Reflex (Python)         │  ───────────────▶    │  Frontend React (.web)        │
+┌─────────────────────────────┐      compiles to     ┌──────────────────────────────┐
+│  Reflex App (Python)         │  ───────────────▶    │  React Frontend (.web)        │
 │  - rx.State (cards, ...)     │                      │  - PdndDraggable / PdndDrop…  │
 │  - dnd.draggable/drop_target │                      │    (pragmatic_dnd.jsx)        │
 │  - handle_drop(@rx.event)    │   ◀── WebSocket ───  │  - useEffect + draggable()/   │
-└─────────────────────────────┘   evento on_drop      │    dropTargetForElements()/   │
-                                   (payload JSON)      │    monitorForElements()       │
+└─────────────────────────────┘   on_drop event       │    dropTargetForElements()/   │
+                                   (JSON payload)      │    monitorForElements()       │
                                                        └───────────────┬───────────────┘
-                                                                       │ usa
+                                                                       │ uses
                                                        ┌───────────────▼───────────────┐
                                                        │ @atlaskit/pragmatic-drag-and-  │
                                                        │ drop (+ hitbox, auto-scroll,   │
@@ -54,84 +55,84 @@ con la librería mediante `rx.asset`, y un conjunto de **wrappers Python**
                                                        └────────────────────────────────┘
 ```
 
-### 3.2 Componentes
+### 3.2 Components
 
-| Componente | Tecnología | Responsabilidad |
+| Component | Technology | Responsibility |
 |---|---|---|
-| `pragmatic_dnd.jsx` | React (JSX) | Adjuntar Pragmatic a elementos vía `useEffect`/`useRef`; normalizar y emitir payloads. |
-| `core.py` | Reflex `NoSSRComponent` | Exponer `Draggable`/`DropTarget`/`Monitor`/`ScrollContainer` con props y eventos. |
-| `__init__.py` | Python | API pública y factorías (`draggable`, …). |
-| `lib_dependencies` | npm | Instalar `@atlaskit/pragmatic-drag-and-drop*` en `.web`. |
-| App demo | Reflex | Kanban ordenable que consume la librería. |
+| `pragmatic_dnd.jsx` | React (JSX) | Attach Pragmatic to elements via `useEffect`/`useRef`; normalize and emit payloads. |
+| `core.py` | Reflex `NoSSRComponent` | Expose `Draggable`/`DropTarget`/`Monitor`/`ScrollContainer` with props and events. |
+| `__init__.py` | Python | Public API and factories (`draggable`, …). |
+| `lib_dependencies` | npm | Install `@atlaskit/pragmatic-drag-and-drop*` into `.web`. |
+| Demo app | Reflex | Sortable Kanban that consumes the library. |
 
-### 3.3 Flujo de Datos
+### 3.3 Data Flow
 
-**Flujo: soltar una tarjeta en otra columna**
-
-```
-1. El usuario inicia el arrastre de una tarjeta (PdndDraggable).
-2. El glue llama draggable({getInitialData: () => {dragId, ...itemData}}).
-3. Al entrar a un DropTarget con hitbox, attachClosestEdge calcula el borde.
-4. Al soltar, monitorForElements.onDrop reúne {source, dropTargets}.
-5. El glue sanitiza el payload (JSON) y llama onDrop(payload).
-6. Reflex envía el evento por WebSocket a KanbanState.handle_drop.
-7. El handler reconstruye el board de forma inmutable y reasigna self.cards.
-8. Reflex difunde el nuevo estado y el frontend re-renderiza.
-```
-
-**Flujo de error / borde:**
+**Flow: dropping a card into another column**
 
 ```
-1. Soltar fuera de todo target → dropTargets == [] → handler hace no-op.
-2. Datos no serializables → descartados por clean() antes de cruzar el socket.
-3. Render duplicado → cleanup del useEffect anterior evita listeners colgados.
+1. The user starts dragging a card (PdndDraggable).
+2. The glue calls draggable({getInitialData: () => {dragId, ...itemData}}).
+3. On entering a DropTarget with hitbox, attachClosestEdge computes the edge.
+4. On drop, monitorForElements.onDrop gathers {source, dropTargets}.
+5. The glue sanitizes the payload (JSON) and calls onDrop(payload).
+6. Reflex sends the event over WebSocket to KanbanState.handle_drop.
+7. The handler rebuilds the board immutably and reassigns self.cards.
+8. Reflex broadcasts the new state and the frontend re-renders.
 ```
 
-## 4. Decisiones de Diseño
+**Error / edge flow:**
 
-### DD-001: Glue JSX local vs. paquete npm propio
-- **Decisión:** empaquetar `pragmatic_dnd.jsx` con `rx.asset(shared=True)` y declarar
-  las dependencias `@atlaskit` vía `lib_dependencies`.
-- **Alternativas:** (a) publicar un paquete npm propio que reexporte; (b) inyectar
-  todo con `add_hooks` (hooks crudos en cada wrapper).
-- **Razón:** el asset local evita una cadena de publicación npm y mantiene el glue
-  versionado junto al Python; `add_hooks` crudo es más frágil y difícil de leer.
+```
+1. Dropping outside any target → dropTargets == [] → handler is a no-op.
+2. Non-serializable data → discarded by clean() before crossing the socket.
+3. Duplicate render → cleanup from the previous useEffect avoids dangling listeners.
+```
+
+## 4. Design Decisions
+
+### DD-001: Local JSX glue vs. dedicated npm package
+- **Decision:** bundle `pragmatic_dnd.jsx` with `rx.asset(shared=True)` and declare
+  the `@atlaskit` dependencies via `lib_dependencies`.
+- **Alternatives:** (a) publish a dedicated npm package that re-exports; (b) inject
+  everything with `add_hooks` (raw hooks in each wrapper).
+- **Rationale:** the local asset avoids an npm publishing chain and keeps the glue
+  versioned alongside the Python; raw `add_hooks` is more fragile and harder to read.
 
 ### DD-002: `NoSSRComponent`
-- **Decisión:** todas las clases heredan de `NoSSRComponent`.
-- **Razón:** Pragmatic usa `document`/`window`; el import dinámico evita fallos de SSR.
+- **Decision:** all classes inherit from `NoSSRComponent`.
+- **Rationale:** Pragmatic uses `document`/`window`; the dynamic import avoids SSR failures.
 
-### DD-003: Eventos discretos, no streaming del movimiento
-- **Decisión:** solo cruzan el WebSocket eventos `start`/`enter`/`leave`/`drop`.
-- **Razón:** el cálculo continuo (posición, borde) ocurre en el cliente; enviar cada
-  `onDrag` saturaría el socket. El estado de Python solo cambia al soltar.
+### DD-003: Discrete events, not movement streaming
+- **Decision:** only `start`/`enter`/`leave`/`drop` events cross the WebSocket.
+- **Rationale:** the continuous computation (position, edge) happens on the client; sending every
+  `onDrag` would saturate the socket. The Python state only changes on drop.
 
-### DD-004: Monitor como fuente única de verdad para boards
-- **Decisión:** recomendar un único `monitor(on_drop=...)` por board en lugar de un
-  handler por tarjeta.
-- **Razón:** simplifica la lógica de recolocación y reduce props por ítem.
+### DD-004: Monitor as the single source of truth for boards
+- **Decision:** recommend a single `monitor(on_drop=...)` per board instead of a
+  handler per card.
+- **Rationale:** simplifies the relocation logic and reduces props per item.
 
-## 5. Estructura del Repositorio
+## 5. Repository Structure
 
 ```
 reflex-pragmatic-drag-and-drop/
-├── reflex_pragmatic_dnd/            # LIBRERÍA
-│   ├── __init__.py                  # API pública
-│   ├── core.py                      # wrappers NoSSRComponent
-│   └── pragmatic_dnd.jsx            # glue React (rx.asset)
-├── reflex_pragmatic_drag_and_drop/  # APP DEMO (Kanban)
+├── reflex_pragmatic_dnd/            # LIBRARY
+│   ├── __init__.py                  # public API
+│   ├── core.py                      # NoSSRComponent wrappers
+│   └── pragmatic_dnd.jsx            # React glue (rx.asset)
+├── reflex_pragmatic_drag_and_drop/  # DEMO APP (Kanban)
 │   └── reflex_pragmatic_drag_and_drop.py
-├── examples/                        # ejemplos adicionales (lista ordenable)
-├── specs/                           # esta documentación SDD
+├── examples/                        # additional examples (sortable list)
+├── specs/                           # this SDD documentation
 ├── rxconfig.py
 └── pyproject.toml
 ```
 
-## 6. Riesgos y Mitigaciones
+## 6. Risks and Mitigations
 
-| Riesgo | Impacto | Mitigación |
+| Risk | Impact | Mitigation |
 |---|---|---|
-| Cambios de API en `@atlaskit` | Roturas al actualizar | Versiones pineadas (`^1.x`), pruebas de humo del build. |
-| Reflex cambia el patrón de assets | Glue no carga | Cubrir con CI sobre la versión de Reflex soportada. |
-| Payloads grandes | Latencia | `item_data` debe ser pequeño; documentado en el API Spec. |
-| Reordenamiento incorrecto con ids inestables | UX rota | Requisito explícito de `drag_id`/`drop_id` estables. |
+| API changes in `@atlaskit` | Breakage on update | Pinned versions (`^1.x`), build smoke tests. |
+| Reflex changes the asset pattern | Glue does not load | Cover with CI against the supported Reflex version. |
+| Large payloads | Latency | `item_data` must be small; documented in the API Spec. |
+| Incorrect reordering with unstable ids | Broken UX | Explicit requirement for stable `drag_id`/`drop_id`. |
