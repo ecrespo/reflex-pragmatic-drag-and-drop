@@ -17,7 +17,18 @@ for the complete design (PRD, API, Tech Design, Data Model, Plan).
 
 - Python ≥ 3.12 · Reflex ≥ 0.9 · [`uv`](https://docs.astral.sh/uv/) package manager
 
-## Installation and running (Kanban demo)
+## Installation
+
+Add the published package to your Reflex project:
+
+```bash
+uv add reflex-pragmatic-drag-and-drop      # or: pip install reflex-pragmatic-drag-and-drop
+```
+
+The pinned `@atlaskit/*` npm packages and the bundled React glue are installed by
+Reflex into `.web` on the next `reflex run` — no manual JavaScript setup.
+
+## Running the Kanban demo (from a clone)
 
 ```bash
 uv sync                 # installs Python dependencies
@@ -123,6 +134,7 @@ dnd.drop_target(
 
 ## Examples
 
+- **Quickstart (minimal):** [`examples/quickstart.py`](examples/quickstart.py) — the smallest app after a PyPI install.
 - **Sortable Kanban:** [`reflex_pragmatic_drag_and_drop/reflex_pragmatic_drag_and_drop.py`](reflex_pragmatic_drag_and_drop/reflex_pragmatic_drag_and_drop.py) (default app).
 - **Sortable list:** [`examples/sortable_list.py`](examples/sortable_list.py).
 
@@ -154,6 +166,12 @@ Covers the pure reducers (transformation rules from Data Model §4 and edge case
 from API Spec §4), the states of the demo/example app, and the wrapper contract
 (tags, snake↔camel props, events, `NoSSRComponent`, pinned `@atlaskit`
 dependencies).
+
+## Publishing
+
+This package is a Reflex custom component. Build it with
+`uv run reflex component build` and publish with `uv publish`. Full steps,
+prerequisites, and the command reference are in [`PUBLISHING.md`](PUBLISHING.md).
 
 ## License
 

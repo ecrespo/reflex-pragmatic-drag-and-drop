@@ -1,6 +1,6 @@
 [project]
 name = "reflex-pragmatic-drag-and-drop"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reflex bindings for Atlassian Pragmatic drag and drop (sortable lists, Kanban) in pure Python"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -11,6 +11,7 @@ authors = [
 ]
 keywords = [
     "reflex",
+    "reflex-custom-components",
     "drag-and-drop",
     "dnd",
     "pragmatic-drag-and-drop",
@@ -42,6 +43,9 @@ Issues = "https://github.com/ecrespo/reflex-pragmatic-drag-and-drop/issues"
 [dependency-groups]
 dev = [
     "pytest>=9.1.0",
+    # `reflex component build` needs `build`; `twine` is the publish fallback to `uv publish`.
+    "build>=1.2.1",
+    "twine>=5.1.1",
 ]
 
 [build-system]
