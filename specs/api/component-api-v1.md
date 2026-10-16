@@ -30,7 +30,7 @@ import reflex_pragmatic_dnd as dnd
 
 ### 2.1 `draggable(*children, **props)` → `Draggable`
 
-Wraps `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
+Wraps `@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter#draggable`.
 
 | Prop | Python Type | Required | Description |
 |---|---|---|---|
@@ -47,7 +47,7 @@ Wraps `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
 
 ### 2.2 `drop_target(*children, **props)` → `DropTarget`
 
-Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge`.
+Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge/{attach,extract}-closest-edge`.
 
 | Prop | Python Type | Required | Description |
 |---|---|---|---|

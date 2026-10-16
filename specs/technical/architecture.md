@@ -132,7 +132,7 @@ reflex-pragmatic-drag-and-drop/
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| API changes in `@atlaskit` | Breakage on update | Pinned versions (`^1.x`), build smoke tests. |
+| API changes in `@atlaskit` | Breakage on update | Pinned versions (core `^4.x`), build smoke tests. |
 | Reflex changes the asset pattern | Glue does not load | Cover with CI against the supported Reflex version. |
 | Large payloads | Latency | `item_data` must be small; documented in the API Spec. |
 | Incorrect reordering with unstable ids | Broken UX | Explicit requirement for stable `drag_id`/`drop_id`. |

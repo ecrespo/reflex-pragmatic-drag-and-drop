@@ -18,10 +18,10 @@ _JSX_PATH = rx.asset("pragmatic_dnd.jsx", shared=True)
 
 # Pinned versions of the Pragmatic drag and drop packages (full suite).
 _LIB_DEPS: list[str] = [
-    "@atlaskit/pragmatic-drag-and-drop@^1.8.1",
-    "@atlaskit/pragmatic-drag-and-drop-hitbox@^1.1.0",
-    "@atlaskit/pragmatic-drag-and-drop-auto-scroll@^2.1.5",
-    "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@^3.2.10",
+    "@atlaskit/pragmatic-drag-and-drop@^4.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-hitbox@^3.0.0",
+    "@atlaskit/pragmatic-drag-and-drop-auto-scroll@^3.2.1",
+    "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@^4.2.4",
 ]
 
 
