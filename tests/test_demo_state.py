@@ -91,3 +91,12 @@ def test_list_reorder_onto_self_is_noop():
         {"source": {"id": "a"}, "dropTargets": [{"id": "a", "closestEdge": "top"}]},
     )
     assert [x["id"] for x in s.items] == before
+
+def test_kanban_feature_toggles():
+    s = make(KanbanState)
+    assert s.show_indicator is True
+    assert s.scroll_speed == "standard"
+    KanbanState.set_show_indicator.fn(s, False)
+    KanbanState.set_scroll_speed.fn(s, "fast")
+    assert s.show_indicator is False
+    assert s.scroll_speed == "fast"
