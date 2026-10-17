@@ -45,7 +45,7 @@ dev = [
     "pytest>=9.1.0",
     # `reflex component build` needs `build`; `twine` is the publish fallback to `uv publish`.
     "build>=1.2.1",
-    "twine>=5.1.1",
+    "twine>=7.0.0",
 ]
 
 [build-system]

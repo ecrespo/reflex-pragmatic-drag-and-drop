@@ -1,0 +1,129 @@
+# Release pipeline: test -> build -> publish to PyPI -> GitHub release.
+#
+# Trigger:
+#   * push a tag `v<version>` matching `[project].version` in pyproject.toml
+#       git tag -a v0.2.1 -m "v0.2.1" && git push origin v0.2.1
+#   * or run it manually (Actions -> Publish -> Run workflow) to upload the
+#     current ref to TestPyPI (dry run) or PyPI.
+#
+# Publishing uses PyPI Trusted Publishing (OIDC): no API token is stored in the
+# repo. One-time setup is described in PUBLISHING.md ("Automated release").
+
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Package index to upload to"
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Check tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          pkg_version=$(uv version --short)
+          init_version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' reflex_pragmatic_dnd/__init__.py)
+          tag_version="${GITHUB_REF_NAME#v}"
+          echo "tag=$tag_version pyproject=$pkg_version __init__=$init_version"
+          if [ "$tag_version" != "$pkg_version" ] || [ "$pkg_version" != "$init_version" ]; then
+            echo "::error::Version mismatch: tag v$tag_version, pyproject $pkg_version, __init__ $init_version"
+            exit 1
+          fi
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Check the wheel ships the React glue
+        run: |
+          unzip -l dist/*.whl | grep -q "reflex_pragmatic_dnd/pragmatic_dnd.jsx" \
+            || { echo "::error::pragmatic_dnd.jsx missing from the wheel"; exit 1; }
+
+      - name: Validate distribution metadata
+        # twine >= 7 understands the Metadata-Version 2.5 emitted by hatchling.
+        run: uvx --from "twine>=7" twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish-testpypi:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.repository == 'testpypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/reflex-pragmatic-drag-and-drop/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.repository == 'pypi')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/reflex-pragmatic-drag-and-drop/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish-pypi
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - name: Create GitHub release with the distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag

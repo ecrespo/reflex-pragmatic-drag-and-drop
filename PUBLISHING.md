@@ -90,7 +90,47 @@ uv pip install reflex-pragmatic-drag-and-drop
 python -c "import reflex_pragmatic_dnd as dnd; print(dnd.__version__)"
 ```
 
-## Releasing a new version
+## Automated release (GitHub Actions)
+
+Two workflows live in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `ci.yml` | PR / push to `develop` and `main` | `uv sync --locked` + `pytest` on Python 3.12 and 3.13. |
+| `publish.yml` | tag `v*`, or manual run | Runs CI → checks tag == `pyproject` == `__version__` → `uv build` → verifies the `.jsx` is in the wheel → `twine check --strict` → uploads to PyPI → creates a GitHub release with the dists attached. |
+
+Uploads use **PyPI Trusted Publishing** (OIDC), so no API token is stored in
+GitHub.
+
+### One-time setup
+
+1. On PyPI: *Your projects → reflex-pragmatic-drag-and-drop → Manage → Publishing →
+   Add a new publisher (GitHub)* with:
+   - Owner: `ecrespo` · Repository: `reflex-pragmatic-drag-and-drop`
+   - Workflow name: `publish.yml` · Environment name: `pypi`
+2. (Optional, for dry runs) the same on <https://test.pypi.org> with environment
+   name `testpypi`. TestPyPI is a separate account/project.
+3. On GitHub: *Settings → Environments* → create `pypi` (and `testpypi`). For
+   extra safety add yourself as a *required reviewer* on `pypi` and restrict it
+   to tags `v*`.
+
+### Cutting a release
+
+```bash
+# on develop: bump the version in pyproject.toml and reflex_pragmatic_dnd/__init__.py
+uv version 0.2.1 && sed -i 's/__version__ = ".*"/__version__ = "0.2.1"/' reflex_pragmatic_dnd/__init__.py
+uv lock && uv run pytest
+git commit -am "release: v0.2.1"
+# PR develop -> main, merge, then tag main:
+git switch main && git pull
+git tag -a v0.2.1 -m "v0.2.1" && git push origin v0.2.1
+```
+
+The tag push starts `publish.yml`; if the tag does not match the package
+version the build fails before anything is uploaded. To try the pipeline without
+touching PyPI, run *Actions → Publish → Run workflow* with `testpypi`.
+
+## Releasing a new version manually
 
 1. Bump the version in **both** places so they stay in sync:
    - `pyproject.toml` → `[project].version`
