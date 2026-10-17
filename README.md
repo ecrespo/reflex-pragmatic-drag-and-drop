@@ -17,6 +17,9 @@ for the complete design (PRD, API, Tech Design, Data Model, Plan).
 
 - Python ≥ 3.12 · Reflex ≥ 0.9 · [`uv`](https://docs.astral.sh/uv/) package manager
 
+Pinned versions: core `^4.0.0`, hitbox `^3.0.0`, auto-scroll `^3.2.1`,
+react-drop-indicator `^4.2.4`.
+
 ## Installation
 
 Add the published package to your Reflex project:
@@ -35,7 +38,13 @@ uv sync                 # installs Python dependencies
 uv run reflex run       # installs @atlaskit packages in .web and starts on :3000
 ```
 
-Open http://localhost:3000 and drag the cards between columns.
+Open http://localhost:3000 and drag the cards by their grip handle within and
+between columns. The demo toggles the Atlaskit drop indicator line and switches
+the auto-scroll speed of the column lists (`standard` / `fast`).
+
+> After upgrading the `@atlaskit/*` pins, delete the local `.web/` directory so
+> Reflex reinstalls the frontend from `reflex.lock/` (a stale `.web/package.json`
+> makes the frozen-lockfile install fail with "lockfile is out of sync").
 
 ## Usage
 
@@ -85,6 +94,26 @@ def index():
 | `dnd.drop_target(...)` | `dropTargetForElements` (+ hitbox) | `on_drag_enter`, `on_drag_leave`, `on_drop` |
 | `dnd.monitor(...)` | `monitorForElements` | `on_drag_start`, `on_drop` |
 | `dnd.scroll_container(...)` | `autoScrollForElements` | — |
+
+Built-in drop indicator and auto-scroll configuration:
+
+```python
+dnd.drop_target(
+    card,
+    drop_id="c1",
+    with_closest_edge=True,
+    show_drop_indicator=True,   # Atlaskit <DropIndicator> on the closest edge
+    drop_indicator_gap="8px",   # spacing between siblings; line sits halfway
+)
+
+dnd.scroll_container(
+    cards,
+    max_scroll_speed="fast",    # "standard" (default) | "fast"
+    allowed_axis="vertical",    # "all" (default) | "vertical" | "horizontal"
+    max_height="300px",
+    overflow_y="auto",
+)
+```
 
 Full details on props and payloads: [`specs/api/component-api-v1.md`](specs/api/component-api-v1.md).
 

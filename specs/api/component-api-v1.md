@@ -30,7 +30,7 @@ import reflex_pragmatic_dnd as dnd
 
 ### 2.1 `draggable(*children, **props)` → `Draggable`
 
-Wraps `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
+Wraps `@atlaskit/pragmatic-drag-and-drop/adapter/element-adapter#draggable`.
 
 | Prop | Python Type | Required | Description |
 |---|---|---|---|
@@ -47,7 +47,7 @@ Wraps `@atlaskit/pragmatic-drag-and-drop/element/adapter#draggable`.
 
 ### 2.2 `drop_target(*children, **props)` → `DropTarget`
 
-Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge`.
+Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge/{attach,extract}-closest-edge`.
 
 | Prop | Python Type | Required | Description |
 |---|---|---|---|
@@ -55,6 +55,10 @@ Wraps `dropTargetForElements` + (optional) `@atlaskit/pragmatic-drag-and-drop-hi
 | `target_data` | `dict` | No | Target data, included in the drop payload. |
 | `with_closest_edge` | `bool` | No (default `False`) | Enables the closest-edge hitbox. |
 | `allowed_edges` | `list[str]` | No (default `["top","bottom"]`) | Edges considered: `top`/`bottom`/`left`/`right`. |
+| `show_drop_indicator` | `bool` | No (default `False`) | Renders `@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box#DropIndicator` on the closest edge while hovered. Requires `with_closest_edge`; the wrapper gets `position: relative`. |
+| `drop_indicator_gap` | `str` | No | CSS size between sibling targets; the line is drawn halfway (e.g. `"8px"`). |
+| `drop_indicator_type` | `str` | No (default `"terminal"`) | `terminal` / `terminal-no-bleed` / `no-terminal`. |
+| `drop_indicator_appearance` | `str` | No (default `"default"`) | `default` / `warning`. |
 
 **Events**
 
@@ -82,6 +86,11 @@ Wraps `monitorForElements`. Renders no visible footprint.
 
 Wraps `combine(dropTargetForElements, autoScrollForElements)`. Auto-scrolls
 while dragging near the container edges. No events of its own in v1.0.
+
+| Prop | Python Type | Required | Description |
+|---|---|---|---|
+| `max_scroll_speed` | `str` | No (default `"standard"`) | Auto-scroll 3.x `getConfiguration().maxScrollSpeed`: `standard` / `fast`. |
+| `allowed_axis` | `str` | No (default `"all"`) | Auto-scroll `getAllowedAxis`: `all` / `vertical` / `horizontal`. |
 
 ## 3. Conventions
 
