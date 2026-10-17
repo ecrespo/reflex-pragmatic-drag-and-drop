@@ -63,6 +63,15 @@ class DropTarget(_PdndBase):
     # When True, the drop payload includes the closest edge ("top"/"bottom"/...).
     with_closest_edge: rx.Var[bool]
     allowed_edges: rx.Var[list[str]]
+    # Render the Atlaskit ``DropIndicator`` line on the closest edge while an
+    # item hovers (react-drop-indicator 4.x). Requires ``with_closest_edge``.
+    show_drop_indicator: rx.Var[bool]
+    # CSS size between sibling targets; the line is drawn halfway (e.g. "8px").
+    drop_indicator_gap: rx.Var[str]
+    # "terminal" (default) | "terminal-no-bleed" | "no-terminal".
+    drop_indicator_type: rx.Var[str]
+    # "default" | "warning".
+    drop_indicator_appearance: rx.Var[str]
 
     # Payloads carry {"dropId", "closestEdge", "source", "target"}.
     on_drag_enter: rx.EventHandler[lambda e: [e]]
@@ -87,6 +96,11 @@ class ScrollContainer(_PdndBase):
     """Container that auto-scrolls while an item is dragged over its edges."""
 
     tag = "PdndScrollContainer"
+
+    # Auto-scroll 3.x configuration: "standard" (default) | "fast".
+    max_scroll_speed: rx.Var[str]
+    # Axis allowed to auto-scroll: "all" (default) | "vertical" | "horizontal".
+    allowed_axis: rx.Var[str]
 
 
 # Convenience factory functions (Reflex idiom: lowercase callables).

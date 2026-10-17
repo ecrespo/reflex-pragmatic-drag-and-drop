@@ -21,6 +21,7 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/utils/combine";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { attachClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge/attach-closest-edge";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge/extract-closest-edge";
+import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 
 // Strip non-serialisable values so payloads can cross the Reflex websocket.
 function clean(data) {
@@ -84,6 +85,10 @@ export function PdndDropTarget({
   targetData,
   withClosestEdge,
   allowedEdges,
+  showDropIndicator,
+  dropIndicatorGap,
+  dropIndicatorType,
+  dropIndicatorAppearance,
   onDragEnter,
   onDragLeave,
   onDrop,
@@ -141,12 +146,25 @@ export function PdndDropTarget({
               dropId,
               closestEdge: edge,
               source: source.data,
-              target: self.data,
+              target: edge ? { ...self.data, closestEdge: edge } : self.data,
             })
           );
       },
     });
-  }, [dropId, withClosestEdge, JSON.stringify(targetData)]);
+  }, [
+    dropId,
+    withClosestEdge,
+    JSON.stringify(targetData),
+    JSON.stringify(allowedEdges),
+  ]);
+
+  // The indicator line is absolutely positioned against this wrapper, so it
+  // needs a positioned ancestor. Callers can still override via `style`.
+  const indicatorEnabled = showDropIndicator && withClosestEdge;
+  const { style, ...rest } = props;
+  const wrapperStyle = indicatorEnabled
+    ? { position: "relative", ...(style || {}) }
+    : style;
 
   return (
     <div
@@ -154,9 +172,18 @@ export function PdndDropTarget({
       data-over={isOver}
       data-closest-edge={closestEdge || ""}
       data-drop-id={dropId}
-      {...props}
+      style={wrapperStyle}
+      {...rest}
     >
       {children}
+      {indicatorEnabled && closestEdge && (
+        <DropIndicator
+          edge={closestEdge}
+          gap={dropIndicatorGap}
+          type={dropIndicatorType}
+          appearance={dropIndicatorAppearance}
+        />
+      )}
     </div>
   );
 }
@@ -171,7 +198,12 @@ export function PdndMonitor({ onDragStart, onDrop, children }) {
       onDragStart: ({ source }) =>
         onDragStart && onDragStart(clean({ source: source.data })),
       onDrop: ({ source, location }) => {
-        const targets = location.current.dropTargets.map((t) => t.data);
+        // `attachClosestEdge` stores the edge under a Symbol key, which
+        // JSON serialisation drops; surface it as a plain `closestEdge` field.
+        const targets = location.current.dropTargets.map((t) => {
+          const edge = extractClosestEdge(t.data);
+          return edge ? { ...t.data, closestEdge: edge } : t.data;
+        });
         onDrop &&
           onDrop(
             clean({
@@ -189,17 +221,28 @@ export function PdndMonitor({ onDragStart, onDrop, children }) {
 
 // ---------------------------------------------------------------------------
 // AutoScrollContainer: enables auto-scrolling while dragging over this element.
+// `maxScrollSpeed` ("standard" | "fast") and `allowedAxis` ("all" | "vertical" |
+// "horizontal") map to the auto-scroll 3.x `getConfiguration`/`getAllowedAxis`.
 // ---------------------------------------------------------------------------
-export function PdndScrollContainer({ children, ...props }) {
+export function PdndScrollContainer({
+  maxScrollSpeed,
+  allowedAxis,
+  children,
+  ...props
+}) {
   const ref = useRef(null);
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
     return combine(
       dropTargetForElements({ element }),
-      autoScrollForElements({ element })
+      autoScrollForElements({
+        element,
+        getConfiguration: () => ({ maxScrollSpeed: maxScrollSpeed || "standard" }),
+        getAllowedAxis: () => allowedAxis || "all",
+      })
     );
-  }, []);
+  }, [maxScrollSpeed, allowedAxis]);
   return (
     <div ref={ref} {...props}>
       {children}

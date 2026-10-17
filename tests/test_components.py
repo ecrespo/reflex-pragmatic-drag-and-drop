@@ -117,6 +117,51 @@ def test_drop_target_props_render_as_camel_case():
     assert "allowedEdges" in rendered
 
 
+def test_drop_target_drop_indicator_props_render_as_camel_case():
+    rendered = str(
+        dnd.drop_target(
+            rx.text("x"),
+            drop_id="z",
+            with_closest_edge=True,
+            show_drop_indicator=True,
+            drop_indicator_gap="8px",
+            drop_indicator_type="terminal-no-bleed",
+            drop_indicator_appearance="warning",
+        ).render()
+    )
+    for prop in [
+        "showDropIndicator",
+        "dropIndicatorGap",
+        "dropIndicatorType",
+        "dropIndicatorAppearance",
+    ]:
+        assert prop in rendered
+
+
+def test_scroll_container_config_props_render_as_camel_case():
+    rendered = str(
+        dnd.scroll_container(
+            rx.text("x"), max_scroll_speed="fast", allowed_axis="vertical"
+        ).render()
+    )
+    assert "maxScrollSpeed" in rendered
+    assert "allowedAxis" in rendered
+
+
+def test_glue_uses_non_deprecated_entry_points():
+    # pragmatic-drag-and-drop 4.x / hitbox 3.x removed the legacy barrels.
+    from pathlib import Path
+
+    glue = (Path(dnd.__file__).parent / "pragmatic_dnd.jsx").read_text()
+    for legacy in [
+        '"@atlaskit/pragmatic-drag-and-drop/element/adapter"',
+        '"@atlaskit/pragmatic-drag-and-drop/combine"',
+        '"@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge"',
+    ]:
+        assert legacy not in glue, f"deprecated import still used: {legacy}"
+    assert "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box" in glue
+
+
 # --------------------------------------------------------------------------- #
 # Event handlers exist as documented (api §2)
 # --------------------------------------------------------------------------- #
