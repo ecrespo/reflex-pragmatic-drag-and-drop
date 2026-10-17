@@ -42,7 +42,7 @@ uv run reflex component build
 Verify the wheel contains the package **and** the bundled glue:
 
 ```bash
-unzip -l dist/reflex_pragmatic_drag_and_drop-0.2.0-py3-none-any.whl
+unzip -l dist/reflex_pragmatic_drag_and_drop-0.2.1-py3-none-any.whl
 # expect: reflex_pragmatic_dnd/{__init__,core,reorder}.py and pragmatic_dnd.jsx
 ```
 
