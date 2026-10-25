@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Run every JavaScript action on the Node 24 runtime.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -33,3 +37,10 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -rA
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Compile the demo app
+        run: uv run reflex compile

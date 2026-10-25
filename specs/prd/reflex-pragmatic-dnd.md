@@ -124,7 +124,7 @@ examples (Kanban, sortable list).
 - **Acceptance criterion:** lists taller than the viewport scroll during the drag.
 
 ## 7. Non-Functional Requirements
-- **RNF-01 (Compatibility):** Reflex ≥ 0.9, Python ≥ 3.12.
+- **RNF-01 (Compatibility):** Reflex ≥ 0.10, Python ≥ 3.12.
 - **RNF-02 (Zero user JS):** all JS logic lives in the packaged *glue*.
 - **RNF-03 (Serializable):** every event payload must be JSON-serializable (sanitized on the client).
 - **RNF-04 (SSR-safe):** the components are `NoSSRComponent` (they use `document`).

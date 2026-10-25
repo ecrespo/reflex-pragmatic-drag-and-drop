@@ -31,7 +31,7 @@ publish.
 | Prerequisite | Owner | Status | Notes |
 |---|---|---|---|
 | Approved specs (PRD/API/Tech/Data) | Ernesto | ☑ Draft ready | This `specs/` directory. |
-| Toolchain: `uv`, Python 3.12, Reflex 0.9 | Ernesto | ☑ | Installed with `uv`. |
+| Toolchain: `uv`, Python 3.12, Reflex 0.10 | Ernesto | ☑ | Installed with `uv`. |
 | Node/bun for `.web` build | Reflex | ☐ | Managed by `reflex run` (first run). |
 | GitHub account + authenticated `gh` | Ernesto | ☐ | For `gh repo create`. |
 
@@ -111,7 +111,7 @@ no-op (API §4); previously it sent the card to the end of the column.
 | ID | Task | Estimate | Dependency | Status |
 |---|---|---|---|---|
 | F5-01 | `pyproject.toml` metadata for the wheel (include `.jsx`) | 0.5d | F4-04 | ☑ (hatchling) |
-| F5-02 | `reflex component build` / `publish` to PyPI | 0.5d | F5-01 | ☐ |
+| F5-02 | `uv build` / `uv publish` to PyPI (`reflex component` removed in Reflex 0.10) | 0.5d | F5-01 | ☐ |
 | F5-03 | CI (GitHub Actions): lint + build + tests | 1d | F4-04 | ☐ |
 | F5-04 | Registration in Reflex Custom Components | 0.25d | F5-02 | ☐ |
 

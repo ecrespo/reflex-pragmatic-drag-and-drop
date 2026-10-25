@@ -1,6 +1,6 @@
 [project]
 name = "reflex-pragmatic-drag-and-drop"
-version = "0.2.1"
+version = "0.3.0"
 description = "Reflex bindings for Atlassian Pragmatic drag and drop (sortable lists, Kanban) in pure Python"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -32,7 +32,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "reflex>=0.9.5.post2",
+    "reflex>=0.10.0",
 ]
 
 [project.urls]

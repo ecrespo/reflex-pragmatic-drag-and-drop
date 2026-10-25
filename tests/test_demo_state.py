@@ -9,7 +9,17 @@ function via ``EventHandler.fn``.
 from __future__ import annotations
 
 from examples.sortable_list import ListState
-from reflex_pragmatic_drag_and_drop.reflex_pragmatic_drag_and_drop import (
+
+try:  # Reflex >= 0.10 allows a single rx.App per RegistrationContext
+    from reflex_base.registry import RegistrationContext
+except ImportError:  # pragma: no cover - Reflex < 0.10
+    RegistrationContext = None
+
+# Both modules create an rx.App at import time: give the demo its own context.
+if RegistrationContext is not None:
+    RegistrationContext.set(RegistrationContext.ensure_context().fork())
+
+from reflex_pragmatic_drag_and_drop.reflex_pragmatic_drag_and_drop import (  # noqa: E402
     COLUMNS,
     KanbanState,
 )

@@ -2,7 +2,7 @@
 #
 # Trigger:
 #   * push a tag `v<version>` matching `[project].version` in pyproject.toml
-#       git tag -a v0.2.1 -m "v0.2.1" && git push origin v0.2.1
+#       git tag -a v0.3.0 -m "v0.3.0" && git push origin v0.3.0
 #   * or run it manually (Actions -> Publish -> Run workflow) to upload the
 #     current ref to TestPyPI (dry run) or PyPI.
 #
@@ -25,6 +25,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Run every JavaScript action on the Node 24 runtime.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
@@ -39,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: "3.12"
 
