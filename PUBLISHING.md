@@ -4,10 +4,12 @@ This package is a **Reflex custom component**: a pip-installable Python package
 that exposes Reflex `Component` wrappers (`reflex_pragmatic_dnd`) plus their
 bundled React glue (`pragmatic_dnd.jsx`) and pinned `@atlaskit` npm dependencies.
 
-The package manager for this repo is [`uv`](https://docs.astral.sh/uv/). The
-Reflex CLI builds the component (`uv run reflex component build`); Reflex does not
-upload to PyPI itself, so publishing is done with `uv publish` (or `twine`), and
-`uv run reflex component share` registers the package in the Reflex gallery.
+The package manager for this repo is [`uv`](https://docs.astral.sh/uv/). Since
+Reflex 0.10 the `reflex component` CLI (`init`/`build`/`share`/`install`) no
+longer exists, so the package is built with the standard `uv build` (hatchling
+backend) and uploaded with `uv publish` (or `twine`). Releases are normally cut
+by tagging `main`, which runs the `publish.yml` workflow (see
+[Automated release](#automated-release-github-actions)).
 
 ## Prerequisites for publishing
 
@@ -36,13 +38,13 @@ make sure the following are in place. They already are in this repo unless noted
 Produce the source distribution (`.tar.gz`) and wheel (`.whl`) in `dist/`:
 
 ```bash
-uv run reflex component build
+uv build
 ```
 
 Verify the wheel contains the package **and** the bundled glue:
 
 ```bash
-unzip -l dist/reflex_pragmatic_drag_and_drop-0.2.1-py3-none-any.whl
+unzip -l dist/reflex_pragmatic_drag_and_drop-0.3.0-py3-none-any.whl
 # expect: reflex_pragmatic_dnd/{__init__,core,reorder}.py and pragmatic_dnd.jsx
 ```
 
@@ -72,14 +74,12 @@ uv publish --publish-url https://test.pypi.org/legacy/ --token pypi-XXXX
 `twine upload dist/*` works as an equivalent (the `twine` dev dependency is
 included for this).
 
-## Register in the Reflex gallery (optional)
+## Reflex gallery
 
-After publishing, add extra details so the component shows up in Reflex's
-component gallery:
-
-```bash
-uv run reflex component share
-```
+`reflex component share` was removed in Reflex 0.10. The package remains
+discoverable on PyPI through the `reflex-custom-components` keyword; see the
+[component template](https://github.com/reflex-dev/component-template) for the
+current community guidance.
 
 ## Verify the published package
 
@@ -96,11 +96,13 @@ Two workflows live in `.github/workflows/`:
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `ci.yml` | PR / push to `develop` and `main` | `uv sync --locked` + `pytest` on Python 3.12 and 3.13. |
+| `ci.yml` | PR / push to `develop` and `main` | `uv sync --locked` + `pytest` on Python 3.12 and 3.13, then `reflex compile` of the demo app on Node 24. |
 | `publish.yml` | tag `v*`, or manual run | Runs CI → checks tag == `pyproject` == `__version__` → `uv build` → verifies the `.jsx` is in the wheel → `twine check --strict` → uploads to PyPI → creates a GitHub release with the dists attached. |
 
 Uploads use **PyPI Trusted Publishing** (OIDC), so no API token is stored in
-GitHub.
+GitHub. Every JavaScript action runs on the Node 24 runtime
+(`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`) and the CI sets up Node 24 with
+`actions/setup-node`.
 
 ### One-time setup
 
@@ -118,12 +120,12 @@ GitHub.
 
 ```bash
 # on develop: bump the version in pyproject.toml and reflex_pragmatic_dnd/__init__.py
-uv version 0.2.1 && sed -i 's/__version__ = ".*"/__version__ = "0.2.1"/' reflex_pragmatic_dnd/__init__.py
+uv version 0.3.0 && sed -i 's/__version__ = ".*"/__version__ = "0.3.0"/' reflex_pragmatic_dnd/__init__.py
 uv lock && uv run pytest
-git commit -am "release: v0.2.1"
+git commit -am "release: v0.3.0"
 # PR develop -> main, merge, then tag main:
 git switch main && git pull
-git tag -a v0.2.1 -m "v0.2.1" && git push origin v0.2.1
+git tag -a v0.3.0 -m "v0.3.0" && git push origin v0.3.0
 ```
 
 The tag push starts `publish.yml`; if the tag does not match the package
@@ -136,20 +138,20 @@ touching PyPI, run *Actions → Publish → Run workflow* with `testpypi`.
    - `pyproject.toml` → `[project].version`
    - `reflex_pragmatic_dnd/__init__.py` → `__version__`
 2. `uv run pytest` — the suite must pass.
-3. `rm -f dist/*.whl dist/*.tar.gz && uv run reflex component build`
+3. `rm -f dist/*.whl dist/*.tar.gz && uv build`
 4. `uv publish`
 5. Tag the release: `git tag v<version> && git push --tags`.
 
-## `reflex component` command reference
-
-See the
-[command reference](https://reflex.dev/docs/custom-components/command-reference/).
-The subcommands available in this Reflex version are:
+## Command reference
 
 | Command | Purpose |
 |---|---|
-| `uv run reflex component init` | Scaffold a new custom component project (already done here). |
-| `uv run reflex component build` | Build `.tar.gz` + `.whl` into `dist/` (also regenerates `core.pyi`). |
-| `uv run reflex component install` | Install this local component in editable mode for development. |
-| `uv run reflex component share` | Register the published package in the Reflex gallery. |
+| `uv sync` | Install the package (editable) with its dev dependencies. |
+| `uv run pytest` | Run the test suite. |
+| `uv run reflex compile` | Compile the demo app (smoke test against the installed Reflex). |
+| `uv build` | Build `.tar.gz` + `.whl` into `dist/`. |
+| `uvx --from "twine>=7" twine check --strict dist/*` | Validate the distribution metadata. |
 | `uv publish` / `twine upload dist/*` | Upload `dist/` to PyPI (needs an account + token). |
+
+> Reflex ≤ 0.9 shipped `reflex component init/build/install/share`; those
+> commands were removed in Reflex 0.10, which this package now requires.

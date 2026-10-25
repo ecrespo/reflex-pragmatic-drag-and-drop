@@ -15,7 +15,7 @@ for the complete design (PRD, API, Tech Design, Data Model, Plan).
 
 ## Requirements
 
-- Python ≥ 3.12 · Reflex ≥ 0.9 · [`uv`](https://docs.astral.sh/uv/) package manager
+- Python ≥ 3.12 · Reflex ≥ 0.10 · [`uv`](https://docs.astral.sh/uv/) package manager
 
 Pinned versions: core `^4.0.0`, hitbox `^3.0.0`, auto-scroll `^3.2.1`,
 react-drop-indicator `^4.2.4`.
@@ -198,9 +198,11 @@ dependencies).
 
 ## Publishing
 
-This package is a Reflex custom component. Build it with
-`uv run reflex component build` and publish with `uv publish`. Full steps,
-prerequisites, and the command reference are in [`PUBLISHING.md`](PUBLISHING.md).
+This package is a Reflex custom component. Build it with `uv build` and
+publish with `uv publish` (or tag a release and let the `publish.yml` workflow do
+it). Reflex 0.10 removed the `reflex component` CLI. Full steps and prerequisites
+are in [`PUBLISHING.md`](PUBLISHING.md); release notes are in
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 
